@@ -53,15 +53,16 @@ The mindReader object has these methods:
     13. ENDIF
     14. END **setPage**
 - **assignSymbols**
-  - When called, assigns a symbol from the *symbols* array to the numbers displayed on page 5, which I believe range from 0-81. All multiples of 9 need to share the same value; the simplest way to ensure this is to repeatedly duplicate the contents of the *symbols* array until it has entries up to 81 (82 total). This will be called when the mindReader object is initialized.
+  - When called, assigns a symbol from the *symbols* array to the numbers displayed on page 5, which range from 0-99 (in reality the number the user gets cannot be higher than 81, but we don't want to clue the user onto that). All multiples of 9 need to share the same value; the simplest way to ensure this is to repeatedly duplicate the contents of the *symbols* array until it has entries up to 99 (100 total). This will be called when the mindReader object is initialized.
   - Procedure:
     1. START **assignSymbols**
-    2. INIT *expandedSymbols* array
-    3. SET *expandedSymbols* to the *symbols* array, duplicated 9 times
-    4. ADD an additional copy of the character at index 0 of the *symbols* array to *expandedSymbols*, to get to an index of 81 (do a console.log here to check length, maybe)
-    5. CALL a function *expand* to transform the values in *expandedSymbols* to a string with the format '(index of value) - (value)'
-    6. PASS OUT *expandedSymbols*
-    7. END **assignSymbols**
+    2. INIT *longSymbols*,*expandedSymbols* array
+    3. SET *longSymbols* to the *symbols* array, duplicated 11 times
+    4. ADD an additional copy of the character at index 0 of the *symbols* array to *longSymbols*, to get to an index of 99 (do a console.log here to check length, maybe)
+    5. CALL a function *expand* to transform the values in *longSymbols* to a string with the format '(index of value) - (value)' and store in *expandedSymbols*
+    6. Convert *expandedSymbols* into a string
+    7. PASS OUT *expandedSymbols*
+    8. END **assignSymbols**
 
 ## Procedure
 1. START

@@ -1,19 +1,24 @@
 const mindReader = {
-    // The page currently displayed, indexed at 0
+    // The page currently displayed, indexed at 0 (-1 indicates uninitialized)
     currentPage: -1,
 
     // An array of symbols to map numbers onto, length of 9
     // Index 0 will be the symbol used to 'guess' the users number
     symbols: ['#', 'V', '%', '+', 'X', '@', '/', '$', '?'],
 
-    // References to document elements to modify to display the application
-    header: document.getElementById('instructions'),
-    advanceButton: document.getElementById('advance'),
-    subtext: document.getElementById('subtext'),
-    startButton: document.getElementById('start'),
-
     // An array of the individual pages of the application, represented 
-    // as an object
+    //   as objects
+    //   Their properties represent:
+    //      instructions: the content of the header
+    //      advbth: the button in the center of the screen that advances the
+    //          application, with a flag to indicate if it is visible on that
+    //          screen and a string of its text content
+    //      sub: the subtitle undernearth the center button with additional
+    //          information for the user, with a flag to indicate if any text
+    //          is visible and a string of that text if so (otherwise empty)
+    //      startbtnIsIcon: an indicator of whether the start button has an
+    //          icon for its content (true on pages 2-5), or has a text message
+    //          (true on the 1st page)  
     pages: [
         {
             // Page 1
@@ -95,12 +100,13 @@ const mindReader = {
         }
     ],
 
-    // A method called internally to set the value of pages[4].instructions
-    // It expands out the symbols array to cover all two-digit integers from
-    // 0-99, converts that to an array with strings pairing the index and the
-    // character in the previous array, and then converts that into a string
-    // with all of the values joined together by a linebreak character
+    // A method called internally to set the value of pages[4].instructions.
+    //   It expands out the symbols array to cover all two-digit integers from
+    //   0-99, converts that to an array with strings pairing the index and the
+    //   character in the previous array, and then converts that into a string
+    //   with all of the values joined together by a linebreak character
     assignSymbols: function () {
+        // Copy the symbols array 10 times, then add one more to cover 0-99
         const longSymbols = this.symbols.concat(this.symbols, this.symbols,
             this.symbols, this.symbols, this.symbols, this.symbols,
             this.symbols, this.symbols, this.symbols, this.symbols);
@@ -116,12 +122,6 @@ const mindReader = {
         }
     },
 
-    // // A callback function used in assignSymbols for an Array.map() call
-    // //   Combines the index and value of the called array into a string
-    // expand: function (value, index) {
-    //     return index + " - " + value;
-    // },
-
     // A method used to change the state of the application by changing the
     //   currentPage property to the passed page value. This is called once
     //   when the page loads to set the display to the starting page; 
@@ -132,61 +132,99 @@ const mindReader = {
         if (this.currentPage === -1) {
             this.pages[4].instructions = this.assignSymbols();
             this.pages[5].instructions = this.symbols[0];
-            this.pages[5].sub.text = '<p>Your symbol is:</p><p>' + this.symbols[0] + '</p>';
+            this.pages[5].sub.text = '<p>Your symbol is:</p><p>' + 
+                this.symbols[0] + '</p>';
         }
 
         // Set the current page to the passed value
         this.currentPage = newPage;
 
-        // Get an event handler function with a copy of this function
+        // Display the current page's layout
+
+        this.displayPage();
+        console.log(this.currentPage);
+    },
+
+    // This function writes the HTML of the current page, and creates event
+    //   handlers to change the page when navigation buttons are clicked
+    displayPage: function () {
+        // Get a reference to target html element to modify
+        const appAnchor = document.getElementById('mind-reader');
+        // Get a reference to its parent
+        const appParent = appAnchor.parentNode;
+
+        // Create an element to replace it
+        const newPage = document.createElement('div');
+        newPage.id = 'mind-reader';
+
+        // Set up event handlers
+        //  Option to perform each once
+        const doOnce = {
+            once: true
+        }
+        
+        // Pass on the object context so I can use setPage and currentPage
         const advanceHandler = this.advance.bind(this);
         const resetHandler = this.reset.bind(this);
+        
+        // Create html content based on the current page to place inside
+        const fragment = new DocumentFragment();
 
-        // Display the current page's layout
-        this.header.innerHTML = this.pages[this.currentPage].instructions;
-        if (this.pages[this.currentPage].advbtn.visible) {
-            this.advanceButton.className = "d-block";
-            this.advanceButton.removeEventListener('click', advanceHandler);
-            this.advanceButton.addEventListener('click', advanceHandler);
+        // Create the header
+        const header = document.createElement('h6');
+        header.id = 'instructions';
+        header.innerHTML = this.pages[this.currentPage].instructions;
+        header.classList.add('display-6');
+        fragment.append(header);
+
+        // Create the center button
+        const advanceButton = document.createElement('button');
+        advanceButton.id = 'advance';
+        if (this.pages[this.currentPage]?.advbtn.visible) {
+            advanceButton.className = "d-block";
+            advanceButton.addEventListener('click', advanceHandler, doOnce);
         } else {
-            this.advanceButton.className = "d-none";
-            this.advanceButton.removeEventListener('click', advanceHandler);
+            advanceButton.className = "d-none";
         }
-        this.advanceButton.textContent = this.pages[this.currentPage].advbtn.text;
-        if (this.pages[this.currentPage].sub.visible) {
-            this.subtext.className = "d-block";
-        }
-        else {
-            this.subtext.className = "d-none";
-        }
-        this.subtext.innerHTML = this.pages[this.currentPage].sub.text;
-        if (this.pages[this.currentPage].startbtnIsIcon) {
-            this.startButton.innerHTML = "<img src='./img/arrow-counterclockwise.svg'>";
-            this.startButton.removeEventListener('click', advanceHandler);
-            this.startButton.removeEventListener('click', resetHandler);
-            this.startButton.addEventListener('click', resetHandler);
-        }
-        else {
-            this.startButton.innerHTML = "GO";
-            this.startButton.removeEventListener('click', resetHandler);
-            this.startButton.addEventListener('click', advanceHandler);
-        }
+        advanceButton.textContent = this.pages[this.currentPage]?.advbtn.text;
+        fragment.append(advanceButton);
 
-        // // A callback function that (hopefully) calls a function to increment the page
-        // function advance () {
-        //     this.setPage(this.currentPage++);
-        // }
-        // // A callback function that (hopefully) calls a function to return to the first page
-        // function reset () {
-        //     this.setPage(0);
-        // }
+        // Create the sub-header
+        const subtext = document.createElement('div');
+        subtext.id = "subtext";
+        if (this.pages[this.currentPage]?.sub.visible) {
+            subtext.className = "d-block";
+        }
+        else {
+            subtext.className = "d-none";
+        }
+        subtext.innerHTML = this.pages[this.currentPage]?.sub.text;
+        fragment.append(subtext);
+
+        // Create the start button
+        const startButton = document.createElement('button');
+        startButton.id = "start";
+        if (this.pages[this.currentPage]?.startbtnIsIcon) {
+            startButton.innerHTML = "<img src='./img/arrow-counterclockwise.svg'>";
+            startButton.addEventListener('click', resetHandler, doOnce);    
+        }
+        else  {
+            startButton.innerHTML = "GO";
+            startButton.addEventListener('click', advanceHandler, doOnce);
+        }
+        fragment.append(startButton);
+
+        // Store the created fragment within the replacement div, then do the 
+        //   replacement
+        newPage.appendChild(fragment);
+        appParent.replaceChild(newPage, appAnchor);
     }
     ,
-    // A callback function that (hopefully) calls a function to increment the page
+    // A callback function that calls a function to increment the page
     advance: function () {
         this.setPage(this.currentPage + 1);
     },
-    // A callback function that (hopefully) calls a function to return to the first page
+    // A callback function that calls a function to return to the first page
     reset: function () {
         this.setPage(0);
     }

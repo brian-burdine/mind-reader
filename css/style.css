@@ -1,0 +1,25 @@
+#instructions {
+    height: 8em;
+    overflow-y: auto;
+}
+
+#advance {
+    background-color: skyblue;
+    color: white;
+    width: 80%;
+    height: 20%;
+    font-size: larger;
+}
+
+#subtext, #start {
+    color: skyblue;
+}
+
+#start {
+    position: absolute;
+    bottom: 15%;
+    right: 40%;
+    width: 4em;
+    height: 4em;
+    border-radius: 50%;
+}
